@@ -192,9 +192,9 @@ class Synel():
 
 def main():
     connection = Synel(COMPANY_ID)
-    # print connection.get_attendance('58', '----')
-    # print connection.is_missing_clock_in_today('47', '----', '2017-12-30')
-    print connection.report_attendance('47', '1234', ATTENDANCE_TYPES['WORKDAY'])
+    # print connection.get_attendance('--', '----')
+    # print connection.is_missing_clock_in_today('--', '----', '2017-12-30')
+    print connection.report_attendance('--', '----', ATTENDANCE_TYPES['WORKDAY'])
 
 
 if __name__ == '__main__':
