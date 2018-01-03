@@ -53,24 +53,31 @@ class SenileBot(object):
     RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
     MENTION_REGEX = "^<@(|[WU].+)>(.*)"
     USERS_URL = 'https://slack.com/api/users.list'
+    NGINX_IP = '192.168.206.41'
+    NGINX_PORT = '8081'
+    MGMT_IP = '192.168.202.16'
+    MGMT_PORT = '8001'
+    USERS_TABLE = 'registered_users'
 
     def __init__(self):
         self.app_token = os.environ.get('SLACK_BOT_TOKEN')
         self.slack_client = SlackClient(self.app_token)
+        self.slack_users = self.slack_users_list()
         self.bot_id = None
         self.available_commands = {
             'register': self.register_user,
         }  # type: dict[(), ()]
         self.connect()
 
-        self.dyndb = boto3.client('dynamodb', endpoint_url='http://{}:{}'.format('192.168.206.41', '8081'),
-                                  iguazio_management_url='http://{}:{}'.format('192.168.202.16', '8001'),
+        self.dyndb = boto3.client('dynamodb', endpoint_url='http://{}:{}'.format(self.NGINX_IP, self.NGINX_PORT),
+                                  iguazio_management_url='http://{}:{}'.format(self.MGMT_IP, self.MGMT_PORT),
                                   is_iguazio_api=True, iguazio_management_username='iguazio',
                                   iguazio_management_password='Password1', region_name='lala')
 
-        response = requests.get('http://{}:{}/{}?prefix=/{}/'.format('192.168.206.41', '8081', '1', 'registered_users'))
+        response = requests.get('http://{}:{}/{}?prefix=/{}/'.format(self.NGINX_IP, self.NGINX_PORT, '1',
+                                                                     self.USERS_TABLE))
         if response.status_code >= '400':
-            self.dyndb.create_table(TableName='registered_users',
+            self.dyndb.create_table(TableName=self.USERS_TABLE,
                                     Bucket='1',
                                     KeySchema=[{'AttributeName': 'slack_user', 'KeyType': 'HASH'}])
         if not self.bot_id:
@@ -141,12 +148,11 @@ class SenileBot(object):
         match = re.search(r'(\d+)\s+(\S+)$', command_text)
         if not match:
             return 'Wrong syntax. {}'.format(command_syntax)
-        self.dyndb.put_item(TableName='registered_users', Bucket='1', validate_exists=False,
+        self.dyndb.put_item(TableName=self.USERS_TABLE, Bucket='1', validate_exists=False,
                             Item=dict(slack_user=dict(S=user_id),
                                       synel_user=dict(S=match.group(1)),
                                       synel_pass=dict(S=match.group(2))))
         return 'Registered user {} with password {}'.format(match.group(1), match.group(2))
-
 
 
 if __name__ == "__main__":
