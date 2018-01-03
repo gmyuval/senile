@@ -8,33 +8,6 @@ import requests
 from copy import deepcopy
 from contextlib import contextmanager
 
-# SAVE_DEFAULTS = {'NumeratorA': '', 'check_row': '', 'ExceptType': '', 'Emp_Name': '', 'Emp_noA': '', 'ApproveDateA': '',
-#                  'WorkDateA': '', 'DateA': '', 'DayName': '', 'shift1_start': '', 'shift1_end': '', 'shift2_start': '',
-#                  'shift2_end': '', 'Type': '', 'Schedular': '', 'Time_startA_RND': '', 'Time_endA_RND': '',
-#                  'UpdateStatCodeAW': '', 'ExpectedTimeAW': '', 'intHand': '', 'budgID_AW': '', 'budgDescr_AW': '',
-#                  'subBudgDescr_AW': '', 'subBudgID_AW': '', 'OperAW': '', 'OperNameAW': '', 'ActionAW': '',
-#                  'ActionNameAW': '', 'Code_startAW': '', 'NameTrnFnc_startAW': '', 'Code_endAW': 0,
-#                  'NameTrnFnc_endAW': '', 'OT_ApprTypeNameAW': '', 'OT_ApprTypeAW': '', 'NameAbsenceCodeAW': '',
-#                  'AbsenceCodeAW': '', 'LPresentA': '', 'UserCommentAW': '', 'IsNonWorkDay': '', 'Exception': ''}
-# SAVE_FIELDS = {'check_row': {'editable': False}, 'ExceptType': {'editable': False}, 'Emp_Name': {'editable': False},
-#                'Emp_noA': {'editable': False}, 'ApproveDateA': {'editable': False, 'type': 'string'},
-#                'WorkDateA': {'editable': False, 'type': 'string'}, 'DateA': {'editable': False, 'type': 'string'},
-#                'DayName': {'editable': False}, 'shift1_start': {'editable': False}, 'shift1_end': {'editable': False},
-#                'shift2_start': {'editable': False}, 'shift2_end': {'editable': False}, 'Type': {'editable': False},
-#                'Schedular': {'editable': False}, 'Time_startA_RND': {'editable': False},
-#                'Time_endA_RND': {'editable': False},'UpdateStatCodeAW': {'editable': False},
-#                'ExpectedTimeAW': {'editable': False}, 'intHand': {'editable': False}, 'budgID_AW': {'editable': True},
-#                'budgDescr_AW': {'editable': True, 'validation': {}},'subBudgDescr_AW': {'editable': True},
-#                'subBudgID_AW': {'editable': True}, 'OperAW': {'editable': True}, 'OperNameAW': {'editable': True},
-#                'ActionAW': {'editable': True}, 'ActionNameAW': {'editable': True}, 'Code_startAW': {'editable': True},
-#                'NameTrnFnc_startAW': {'editable': True}, 'Code_endAW': {'editable': True, 'type': 'number'},
-#                'NameTrnFnc_endAW': {'editable': True}, 'Time_startAW': {'type': 'time', 'editable': True},
-#                'Time_endAW': {'type': 'time', 'editable': True}, 'AbsenceTimeAW': {'type': 'time', 'editable': True},
-#                'OT_TimeAW': {'type': 'time', 'editable': True}, 'OT_ApprTypeNameAW': {'editable': False},
-#                'OT_ApprTypeAW': {'editable': True}, 'NameAbsenceCodeAW': {'editable': True},
-#                'AbsenceCodeAW': {'editable': True}, 'LPresentA': {'editable': False},
-#                'UserCommentAW': {'editable': True, 'validation': {'maxlength': 100}},
-#                'IsNonWorkDay': {'editable': False}, 'Exception': {'editable': False}}
 BASE_REQUEST_PARTS = set(('CompanyParams', 'CompanyPermissions', 'CompanyPreferences', 'CompanyPreferencesPermissions'))
 HEBREW = '3'
 COMPANY_ID = ''
@@ -194,7 +167,8 @@ def main():
     connection = Synel(COMPANY_ID)
     # print connection.get_attendance('--', '----')
     # print connection.is_missing_clock_in_today('--', '----', '2017-12-30')
-    print connection.report_attendance('--', '----', ATTENDANCE_TYPES['WORKDAY'])
+    print connection.report_attendance('--', '----', ATTENDANCE_TYPES['WORKDAY'], '2018-01-03')
+    print connection.get_attendance('--', '----')
 
 
 if __name__ == '__main__':

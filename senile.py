@@ -5,6 +5,7 @@ import pdb
 import boto3
 import requests
 from slackclient import SlackClient
+from synel import Synel, ATTENDANCE_TYPES
 
 ACTION_MSG1 = {
     "text": "Eh, forgot to clock-in today?",
