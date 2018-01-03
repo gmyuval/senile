@@ -2,9 +2,10 @@ import os
 import time
 import re
 import pdb
-import boto3
-import requests
+import base64
 from slackclient import SlackClient
+import requests
+import boto3
 from synel import Synel, ATTENDANCE_TYPES
 
 ACTION_MSG1 = {
