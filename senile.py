@@ -3,6 +3,7 @@ import time
 import re
 import pdb
 import boto3
+import requests
 from slackclient import SlackClient
 
 ACTION_MSG1 = {
@@ -44,23 +45,40 @@ ACTION_MSG1 = {
 }
 
 
+
+
+
 class SenileBot(object):
     RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
     MENTION_REGEX = "^<@(|[WU].+)>(.*)"
+    USERS_URL = 'https://slack.com/api/users.list'
 
     def __init__(self):
-        self.slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+        self.app_token = os.environ.get('SLACK_BOT_TOKEN')
+        self.slack_client = SlackClient(self.app_token)
         self.bot_id = None
         self.available_commands = {
             'register': self.register_user,
-        }
+        }  # type: dict[(), ()]
         self.connect()
+
         self.dyndb = boto3.client('dynamodb', endpoint_url='http://{}:{}'.format('192.168.206.41', '8081'),
                                   iguazio_management_url='http://{}:{}'.format('192.168.202.16', '8001'),
                                   is_iguazio_api=True, iguazio_management_username='iguazio',
                                   iguazio_management_password='Password1', region_name='lala')
+
+        response = requests.get('http://{}:{}/{}?prefix=/{}/'.format('192.168.206.41', '8081', '1', 'registered_users'))
+        if response.status_code >= '400':
+            self.dyndb.create_table(TableName='registered_users',
+                                    Bucket='1',
+                                    KeySchema=[{'AttributeName': 'slack_user', 'KeyType': 'HASH'}])
         if not self.bot_id:
             raise RuntimeError('Failed connecting to slack.')
+
+    def slack_users_list(self):
+        response = requests.get('{}?token='.format(self.USERS_URL, self.app_token))
+        response.raise_for_status()
+        return response.content
 
     def connect(self):
         if self.slack_client.rtm_connect():
@@ -122,7 +140,7 @@ class SenileBot(object):
         match = re.search(r'(\d+)\s+(\S+)$', command_text)
         if not match:
             return 'Wrong syntax. {}'.format(command_syntax)
-        self.dyndb.put_item(TableName='registered_users', Bucket='bigdata',
+        self.dyndb.put_item(TableName='registered_users', Bucket='1', validate_exists=False,
                             Item=dict(slack_user=dict(S=user_id),
                                       synel_user=dict(S=match.group(1)),
                                       synel_pass=dict(S=match.group(2))))
