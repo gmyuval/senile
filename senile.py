@@ -2,10 +2,12 @@ import os
 import time
 import re
 import pdb
+import requests
 from slackclient import SlackClient
 
 # instantiate Slack client
-slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+SLACK_TOKEN = os.environ.get('SLACK_BOT_TOKEN')
+slack_client = SlackClient(SLACK_TOKEN)
 # starterbot's user ID in Slack: value is assigned after the bot starts up
 starterbot_id = None
 
@@ -50,7 +52,13 @@ ACTION_MSG1 = {
         }
     ]
 }
+USERS_URL = 'https://slack.com/api/users.list'
 
+
+def slack_users_list():
+    response = requests.get('{}?token='.format(USERS_URL, SLACK_TOKEN))
+    response.raise_for_status()
+    return response.content
 
 def parse_bot_commands(slack_events):
     """
