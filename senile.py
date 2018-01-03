@@ -152,7 +152,7 @@ class SenileBot(object):
         self.dyndb.put_item(TableName=self.USERS_TABLE, Bucket='1', validate_exists=False,
                             Item=dict(slack_user=dict(S=user_id),
                                       synel_user=dict(S=match.group(1)),
-                                      synel_pass=dict(S=match.group(2))))
+                                      synel_pass=dict(S=base64.encode(match.group(2)))))
         return 'Registered user {} with password {}'.format(match.group(1), match.group(2))
 
 

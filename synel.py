@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import pdb
-import base64
 import datetime
 import json
 import requests
@@ -39,7 +38,7 @@ class Synel():
     @contextmanager
     def user_context(self, username, password):
         login_request = deepcopy(self.base_login_request)
-        login_request['Password'] = base64.b64encode(password)
+        login_request['Password'] = password
         login_request['EmpIdOrName'] = username
         response = requests.post(LOGIN_URL, json=login_request)
         response.raise_for_status()
