@@ -147,7 +147,6 @@ class SenileBot(object):
         )
 
     def register_user(self, user_id, command_text):
-        ex = None
         match = re.search(r'(\d+)\s+(\S+)$', command_text)
         if not match:
             return ERROR_MSG1
@@ -155,9 +154,7 @@ class SenileBot(object):
         synel_pass = match.group(2)
         try:
             self.synel.check_login(synel_user, synel_pass)
-        except Exception as ex:
-            pass
-        if ex is not None:
+        except:
             return ERROR_MSG2
         self.dyndb.put_item(TableName=self.USERS_TABLE, Bucket='1', validate_exists=False,
                             Item=dict(slack_user=dict(S=user_id),
