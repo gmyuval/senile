@@ -46,7 +46,8 @@ ACTION_MSG1 = {
     ]
 }
 
-
+ERROR_MSG1 = 'No good, to register try: register <synel_user_id> <synel_password> <manager_slack_user>'
+ERROR_MSG2 = 'Are you senile? could not register to synel using the given username and password'
 
 
 
@@ -64,6 +65,7 @@ class SenileBot(object):
         self.app_token = os.environ.get('SLACK_BOT_TOKEN')
         self.slack_client = SlackClient(self.app_token)
         self.slack_users = self.slack_users_list()
+        self.synel = Synel(os.environ.get('COMPANY_ID'))
         self.bot_id = None
         self.available_commands = {
             'register': self.register_user,
@@ -145,15 +147,23 @@ class SenileBot(object):
         )
 
     def register_user(self, user_id, command_text):
-        command_syntax = "Syntax: register <synel_user> <synel_password>"
+        ex = None
         match = re.search(r'(\d+)\s+(\S+)$', command_text)
         if not match:
-            return 'Wrong syntax. {}'.format(command_syntax)
+            return ERROR_MSG1
+        synel_user = match.group(1)
+        synel_pass = match.group(2)
+        try:
+            self.synel.check_login(synel_user, synel_pass)
+        except Exception as ex:
+            pass
+        if ex is not None:
+            return ERROR_MSG2
         self.dyndb.put_item(TableName=self.USERS_TABLE, Bucket='1', validate_exists=False,
                             Item=dict(slack_user=dict(S=user_id),
-                                      synel_user=dict(S=match.group(1)),
-                                      synel_pass=dict(S=base64.encode(match.group(2)))))
-        return 'Registered user {} with password {}'.format(match.group(1), match.group(2))
+                                      synel_user=dict(S=synel_user),
+                                      synel_pass=dict(S=base64.encode(synel_pass))))
+        return 'Registered user {} with password {}'.format(synel_user, synel_pass)
 
 
 if __name__ == "__main__":
