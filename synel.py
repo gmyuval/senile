@@ -179,7 +179,7 @@ class Synel():
             parsed = json.loads(response.content)
             if 'results' in parsed:
                 for absence in parsed['results']:
-                    report.append({absence['WorkDateA'].split('T')[0]: (absence['AbsenceTimeAW'], absence['Type'])})
+                    report.append((absence['WorkDateA'].split('T')[0], absence['AbsenceTimeAW'], absence['Type']))
             else:
                 report.append({parsed['WorkDateA'].split('T')[0]: (parsed['AbsenceTimeAW'], parsed['Type'])})
             return report
