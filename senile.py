@@ -7,6 +7,7 @@ from gevent import Greenlet
 from slackclient import SlackClient
 import requests
 import boto3
+import json
 from botocore.exceptions import ClientError
 from synel import Synel, ATTENDANCE_TYPES
 
@@ -72,6 +73,13 @@ class SenileBot(object):
         self.available_commands = {
             'register': self.register_user,
             'unregister': self.unregister_user,
+            'notify': self.missing_clock_notification,
+            'show_vacations': self.get_vacations,
+            'show_sickdays': self.get_sickdays,
+            'vacation': self.set_vacation,
+            'sickday': self.set_sickday,
+            'workday': self.set_workday,
+            'halfday': self.set_halfday,
         }  # type: dict[(), ()]
         self.connect()
 
@@ -183,21 +191,77 @@ class SenileBot(object):
 
         return 'Congratulations, you\'ve removed yourself from senile'
 
-    def missing_clock_notification(self, clock_in=True):
-        res = self.dyndb.scan(TableName=self.USERS_TABLE, Bucket='1',
-                              AttributesToGet='slack_user, synel_user,synel_pass')
-        for entry in res:
+    def missing_clock_notification(self, *args, **kwargs):
+        res = self.dyndb.scan(TableName='{}/'.format(self.USERS_TABLE), Bucket='1', AttributesToGet=['slack_user', 'synel_user', 'synel_pass'])
+        for entry in res['Items']:
             inform = False
             try:
-                if clock_in:
-                    inform = self.synel.is_missing_clock_in_today(entry['synel_user'], entry['synel_pass'])
-                else:
-                    pass
+                inform = self.synel.is_missing_clock_in_today(entry['synel_user']['S'], entry['synel_pass']['S'])
             except:
                 pass
             if inform:
-                # send a message to suer
-                pass
+                self.slack_client.api_call(
+                    'chat.postMessage',
+                    channel=entry['slack_user']['S'],
+                    text=ACTION_MSG1['text'],
+                    attachments=ACTION_MSG1['attachments']
+                )
+
+    def set_vacation(self, user_id, command_text):
+        return self.set_attendance(user_id, command_text, ATTENDANCE_TYPES['VACATION'])
+
+    def set_sickday(self, user_id, command_text):
+        return self.set_attendance(user_id, command_text, ATTENDANCE_TYPES['SICKDAY'])
+
+    def set_halfday(self, user_id, command_text):
+        return self.set_attendance(user_id, command_text, ATTENDANCE_TYPES['HALFDAY'])
+
+    def set_workday(self, user_id, command_text):
+        return self.set_attendance(user_id, command_text, ATTENDANCE_TYPES['WORKDAY'])
+
+    def set_attendance(self, user_id, command_text, attendance_type):
+        if command_text:
+            match = re.search(r'\d\d\d\d-\d\d-\d\d$', command_text)
+            if not match:
+                return 'Illegal date format. Please send date in format YYYY-mm-dd or no date at all for today.'
+            date = match.group()
+        else:
+            date = None
+        try:
+            entry = self.dyndb.get_item(TableName=self.USERS_TABLE, Bucket='1',
+                                        AttributesToGet='slack_user,synel_user,synel_pass', Key=dict(slack_user=dict(S=user_id)))
+        except ClientError:
+            return 'You are not register. Perhaps try \'register\' before?'
+        try:
+            self.synel.report_attendance(entry['Item']['synel_user']['S'], entry['Item']['synel_pass']['S'], attendance_type, today=date)
+        except Exception:
+            return 'Future is murky and thus unreportable'
+        return 'You have reported your attendance'
+
+    def get_vacations(self, user_id, command_text):
+        return self.list_attendance(user_id, command_text, ATTENDANCE_TYPES['VACATION'])
+
+    def get_sickdays(self, user_id, command_text):
+        return self.list_attendance(user_id, command_text, ATTENDANCE_TYPES['SICKDAY'])
+
+    def list_attendance(self, user_id, command_text, absense_code):
+        if command_text:
+            match = re.search(r'\d\d\d\d', command_text)
+            if not match or match.group() not in ['2017', '2018']:
+                return 'Illegal year'
+            year = match.group()
+        else:
+            year = None
+        try:
+            entry = self.dyndb.get_item(TableName=self.USERS_TABLE, Bucket='1',
+                                        AttributesToGet='slack_user,synel_user,synel_pass',
+                                        Key=dict(slack_user=dict(S=user_id)))
+        except ClientError:
+            return 'You are not registered. Perhaps try \'register\' before?'
+        rp = self.synel.absence_report(entry['Item']['synel_user']['S'], entry['Item']['synel_pass']['S'], absense_code,
+                                       year=year)
+        rt_msg = '\n'.join([','.join(entry) for entry in rp])
+        return rt_msg
 
 
 if __name__ == "__main__":
