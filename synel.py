@@ -75,7 +75,6 @@ class Synel():
         with self.user_context(username, password) as (session_id, cookies):
             response = requests.get(url, headers={'sessionId': session_id}, cookies=cookies)
             response.raise_for_status()
-            print response.content
             parsed = json.loads(response.content)
             if 'results' in parsed:
                 result = [r for r in parsed['results'] if r['WorkDateA'] == today][0]
@@ -163,14 +162,37 @@ class Synel():
         attendance_request['AttendanceList'].append(current_attendance)
         return attendance_request
 
+    def absence_report(self, username, password, absence_code, year=None):
+        report = []
+        if year is None:
+            year = datetime.datetime.strptime(year, '%Y')
+        from_year = '{}-01-01T00:00:00'.format(year)
+        to_year = '{}-01-01T00:00:00'.format(int(year) + 1)
+        query = {'xFromDate': from_year, 'xToDate': to_year, 'Emp_No': username,
+                 'FilterState': 'AbsenceCodeAW=\'{}\''.format(absence_code),
+                 'GroupCode': username, 'PageLength': '31', 'LPres': 1, 'Updatestatus': -1, 'GridType': 0,
+                 'PageNo': 1}
+        url = '{}?query={}'.format(GET_ATTENDANCE_URL, requests.utils.quote(json.dumps(query)))
+        with self.user_context(username, password) as (session_id, cookies):
+            response = requests.get(url, headers={'sessionId': session_id}, cookies=cookies)
+            response.raise_for_status()
+            parsed = json.loads(response.content)
+            if 'results' in parsed:
+                for absence in parsed['results']:
+                    report.append({absence['WorkDateA'].split('T')[0]: (absence['AbsenceTimeAW'], absence['Type'])})
+            else:
+                report.append({parsed['WorkDateA'].split('T')[0]: (parsed['AbsenceTimeAW'], parsed['Type'])})
+            return report
+
 
 def main():
     connection = Synel(COMPANY_ID)
     # print connection.get_attendance('--', '----')
     # print connection.is_missing_clock_in_today('--', '----', '2017-12-30')
-    print connection.report_attendance('--', '----', ATTENDANCE_TYPES['WORKDAY'], '2018-01-03')
-    print connection.get_attendance('--', '----')
-
+    # print connection.report_attendance('--', '----', ATTENDANCE_TYPES['WORKDAY'], '2018-01-03')
+    # print connection.get_attendance('--', '----')
+    import base64
+    print connection.absence_report('--', base64.b64encode('----'), ATTENDANCE_TYPES['VACATION'], year='2017')
 
 if __name__ == '__main__':
     main()
