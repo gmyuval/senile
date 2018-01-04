@@ -192,23 +192,28 @@ class SenileBot(object):
         return 'Congratulations, you\'ve removed yourself from senile'
 
     def missing_clock_notification(self, *args, **kwargs):
-        res = self.dyndb.scan(TableName='{}/'.format(self.USERS_TABLE), Bucket='1', AttributesToGet=['slack_user', 'synel_user', 'synel_pass'])
-        for entry in res['Items']:
+        entries = []
+        res = self.dyndb.scan(TableName='{}/'.format(self.USERS_TABLE), Bucket='1',
+                              AttributesToGet=['slack_user', 'synel_user', 'synel_pass'])
+        entries.extend(res['Items'])
+        while 'LastEvaluatedKey' in res:
+            res = self.dyndb.scan(TableName='{}/'.format(self.USERS_TABLE), Bucket='1',
+                                  AttributesToGet=['slack_user', 'synel_user', 'synel_pass'],
+                                  ExclusiveStartKey=res['LastEvaluatedKey'])
+            entries.extend(res['Items'])
+        for entry in entries:
             inform = False
             try:
                 inform = self.synel.is_missing_clock_in_today(entry['synel_user']['S'], entry['synel_pass']['S'])
             except:
                 pass
             if inform:
-                return ACTION_MSG1['text']
-                # self.slack_client.api_call(
-                #     'chat.postMessage',
-                #     channel=entry['slack_user']['S'],
-                #     text=ACTION_MSG1['text'],
-                #     attachments=ACTION_MSG1['attachments']
-                # )
-            else:
-                return 'No missed days'
+                self.slack_client.api_call(
+                    'chat.postMessage',
+                    channel=entry['slack_user']['S'],
+                    text=ACTION_MSG1['text'],
+                )
+        return 'Everyone was notified'
 
     def set_vacation(self, user_id, command_text):
         return self.set_attendance(user_id, command_text, ATTENDANCE_TYPES['VACATION'])
