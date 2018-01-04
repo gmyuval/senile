@@ -167,7 +167,7 @@ class Synel():
     def absence_report(self, username, password, absence_code, year=None):
         report = []
         if year is not None:
-            year = datetime.datetime.strptime(year, '%Y')
+            year = datetime.datetime.strftime(year, '%Y')
         else:
             year = datetime.datetime.now().strftime('%Y')
         from_year = '{}-01-01T00:00:00'.format(year)
