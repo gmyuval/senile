@@ -91,6 +91,10 @@ class SenileBot(object):
         response.raise_for_status()
         return response.content
 
+    def get_slack_profile_detail(self, user_id, detail_name):
+        user = [u for u in self.slack_users['members'] if u.id == user_id].pop()
+        return user[detail_name]
+
     def connect(self):
         if self.slack_client.rtm_connect():
             print("Senile Bot connected and running!")
