@@ -19,7 +19,8 @@ GET_ATTENDANCE_URL = BASE_URL + 'Attendance/GetAttendance'
 DELETE_ATTENDANCE = BASE_URL + 'Attendance/DeleteAttendanceFromGrid'
 SAVE_ATTENDANCE_URL = BASE_URL + '/Attendance/SaveAttendanceFromGrid'
 SKIP_TYPES = [s.decode('UTF-8') for s in ['שישי', 'שבת', 'חג']]
-ATTENDANCE_TYPES = {'VACATION': 0, 'SICKDAY': 1, 'WORKDAY': 2, 'HALFDAY': 3}
+ATTENDANCE_TYPES = {'VACATION': 1, 'SICKDAY': 2, 'WORKDAY': 0, 'HALFDAY': 3}
+
 
 
 
@@ -67,8 +68,9 @@ class Synel():
 
     def get_attendance(self, username, password, today=None):
         today, tomorrow = Synel._get_one_day_range(today)
-        query = {'xFromDate': today, 'xToDate': tomorrow, 'Emp_No': 47,
-                 'GroupCode': 47, 'PageLength': '10', 'LPres': 1, 'Updatestatus': -1, 'GridType': 0, 'PageNo': 1, }
+        query = {'xFromDate': today, 'xToDate': tomorrow, 'Emp_No': username,
+                 'GroupCode': username, 'PageLength': '10', 'LPres': 1, 'Updatestatus': -1, 'GridType': 0,
+                 'PageNo': 1}
         url = '{}?query={}'.format(GET_ATTENDANCE_URL, requests.utils.quote(json.dumps(query)))
         with self.user_context(username, password) as (session_id, cookies):
             response = requests.get(url, headers={'sessionId': session_id}, cookies=cookies)
