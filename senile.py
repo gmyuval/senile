@@ -3,6 +3,7 @@ import time
 import re
 import pdb
 import base64
+from gevent import Greenlet
 from slackclient import SlackClient
 import requests
 import boto3
@@ -165,6 +166,22 @@ class SenileBot(object):
                                       synel_user=dict(S=synel_user),
                                       synel_pass=dict(S=base64.encode(synel_pass))))
         return 'Registered user {} with password {}'.format(synel_user, synel_pass)
+
+    def missing_clock_notification(self, clock_in=True):
+        res = self.dyndb.scan(TableName=self.USERS_TABLE, Bucket='1',
+                              AttributesToGet='slack_user, synel_user,synel_pass')
+        for entry in res:
+            inform = False
+            try:
+                if clock_in:
+                    inform = self.synel.is_missing_clock_in_today(entry['synel_user'], entry['synel_pass'])
+                else:
+                    pass
+            except:
+                pass
+            if inform:
+                # send a message to suer
+                pass
 
 
 if __name__ == "__main__":
