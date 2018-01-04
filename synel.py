@@ -9,7 +9,7 @@ from contextlib import contextmanager
 
 BASE_REQUEST_PARTS = set(('CompanyParams', 'CompanyPermissions', 'CompanyPreferences', 'CompanyPreferencesPermissions'))
 HEBREW = '3'
-COMPANY_ID = ''
+COMPANY_ID = '51267213'
 BASE_URL = 'https://harmony.synel.co.il/eharmonynew/api/'
 LOGIN_URL = BASE_URL + 'login/Login'
 CHECK_URL = BASE_URL + 'Common/CheckUserLogin'
@@ -75,6 +75,7 @@ class Synel():
         with self.user_context(username, password) as (session_id, cookies):
             response = requests.get(url, headers={'sessionId': session_id}, cookies=cookies)
             response.raise_for_status()
+            print response.content
             parsed = json.loads(response.content)
             if 'results' in parsed:
                 result = [r for r in parsed['results'] if r['WorkDateA'] == today][0]
@@ -84,6 +85,7 @@ class Synel():
 
     def is_missing_clock_in_today(self, username, password, today=None):
         attendance = self.get_attendance(username, password, today=today)
+        pdb.set_trace()
         if attendance['Time_startA'] == '' and attendance['Type'] not in SKIP_TYPES\
                 and attendance['AbsenceCodeAW'] == '':
                 return True
@@ -164,7 +166,7 @@ class Synel():
 
     def absence_report(self, username, password, absence_code, year=None):
         report = []
-        if year is None:
+        if year is not None:
             year = datetime.datetime.strptime(year, '%Y')
         from_year = '{}-01-01T00:00:00'.format(year)
         to_year = '{}-01-01T00:00:00'.format(int(year) + 1)
@@ -187,12 +189,12 @@ class Synel():
 
 def main():
     connection = Synel(COMPANY_ID)
+    import base64
     # print connection.get_attendance('--', '----')
-    # print connection.is_missing_clock_in_today('--', '----', '2017-12-30')
+    print connection.is_missing_clock_in_today('47', base64.b64encode('1234'))
     # print connection.report_attendance('--', '----', ATTENDANCE_TYPES['WORKDAY'], '2018-01-03')
     # print connection.get_attendance('--', '----')
-    import base64
-    print connection.absence_report('--', base64.b64encode('----'), ATTENDANCE_TYPES['VACATION'], year='2017')
+    # print connection.absence_report('--', base64.b64encode('----'), ATTENDANCE_TYPES['VACATION'], year='2017')
 
 if __name__ == '__main__':
     main()
