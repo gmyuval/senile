@@ -9,7 +9,7 @@ from contextlib import contextmanager
 
 BASE_REQUEST_PARTS = set(('CompanyParams', 'CompanyPermissions', 'CompanyPreferences', 'CompanyPreferencesPermissions'))
 HEBREW = '3'
-COMPANY_ID = '51267213'
+COMPANY_ID = ''
 BASE_URL = 'https://harmony.synel.co.il/eharmonynew/api/'
 LOGIN_URL = BASE_URL + 'login/Login'
 CHECK_URL = BASE_URL + 'Common/CheckUserLogin'
@@ -85,7 +85,6 @@ class Synel():
 
     def is_missing_clock_in_today(self, username, password, today=None):
         attendance = self.get_attendance(username, password, today=today)
-        pdb.set_trace()
         if attendance['Time_startA'] == '' and attendance['Type'] not in SKIP_TYPES\
                 and attendance['AbsenceCodeAW'] == '':
                 return True
@@ -191,7 +190,7 @@ def main():
     connection = Synel(COMPANY_ID)
     import base64
     # print connection.get_attendance('--', '----')
-    print connection.is_missing_clock_in_today('47', base64.b64encode('1234'))
+    print connection.is_missing_clock_in_today('--', base64.b64encode('----'))
     # print connection.report_attendance('--', '----', ATTENDANCE_TYPES['WORKDAY'], '2018-01-03')
     # print connection.get_attendance('--', '----')
     # print connection.absence_report('--', base64.b64encode('----'), ATTENDANCE_TYPES['VACATION'], year='2017')
