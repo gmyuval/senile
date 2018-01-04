@@ -51,7 +51,7 @@ class Synel():
 
     def check_login(self, username, password):
         with self.user_context(username, password) as (session_id, cookies):
-            response = requests.post(CHECK_URL, headers={'sessionId': session_id}, cookies=cookies).content
+            response = requests.post(CHECK_URL, headers={'sessionId': session_id}, cookies=cookies)
             response.raise_for_status()
             return response.content == 'true'
 
