@@ -6,6 +6,7 @@ import base64
 from slackclient import SlackClient
 import requests
 import boto3
+from botocore.exceptions import ClientError
 from synel import Synel, ATTENDANCE_TYPES
 
 ACTION_MSG1 = {
@@ -69,6 +70,7 @@ class SenileBot(object):
         self.bot_id = None
         self.available_commands = {
             'register': self.register_user,
+            'unregister': self.unregister_user,
         }  # type: dict[(), ()]
         self.connect()
 
@@ -151,16 +153,30 @@ class SenileBot(object):
         if not match:
             return ERROR_MSG1
         synel_user = match.group(1)
-        synel_pass = match.group(2)
+        synel_pass = base64.b64encode(match.group(2))
         try:
             self.synel.check_login(synel_user, synel_pass)
-        except:
+        except Exception as e:
             return ERROR_MSG2
         self.dyndb.put_item(TableName=self.USERS_TABLE, Bucket='1', validate_exists=False,
                             Item=dict(slack_user=dict(S=user_id),
                                       synel_user=dict(S=synel_user),
-                                      synel_pass=dict(S=base64.encode(synel_pass))))
+                                      synel_pass=dict(S=synel_pass)))
         return 'Registered user {} with password {}'.format(synel_user, synel_pass)
+
+    def unregister_user(self, user_id, *args):
+        try:
+            self.dyndb.get_item(TableName=self.USERS_TABLE, Bucket='1',
+                                AttributesToGet='slack_user', Key=dict(slack_user=dict(S=user_id)))
+        except ClientError:
+            return 'You are not register. Perhaps try \'register\' before?'
+        try:
+            self.dyndb.delete_item(TableName=self.USERS_TABLE, Bucket='1',
+                                   Key=dict(slack_user=dict(S=user_id)))
+        except ClientError:
+            return 'Something went wrong. Maybe try again later.'
+
+        return 'Congratulations, you\'ve removed yourself from senile'
 
 
 if __name__ == "__main__":
