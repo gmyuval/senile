@@ -200,12 +200,15 @@ class SenileBot(object):
             except:
                 pass
             if inform:
-                self.slack_client.api_call(
-                    'chat.postMessage',
-                    channel=entry['slack_user']['S'],
-                    text=ACTION_MSG1['text'],
-                    attachments=ACTION_MSG1['attachments']
-                )
+                return ACTION_MSG1['text']
+                # self.slack_client.api_call(
+                #     'chat.postMessage',
+                #     channel=entry['slack_user']['S'],
+                #     text=ACTION_MSG1['text'],
+                #     attachments=ACTION_MSG1['attachments']
+                # )
+            else:
+                return 'No missed days'
 
     def set_vacation(self, user_id, command_text):
         return self.set_attendance(user_id, command_text, ATTENDANCE_TYPES['VACATION'])
@@ -260,7 +263,9 @@ class SenileBot(object):
             return 'You are not registered. Perhaps try \'register\' before?'
         rp = self.synel.absence_report(entry['Item']['synel_user']['S'], entry['Item']['synel_pass']['S'], absense_code,
                                        year=year)
-        rt_msg = '\n'.join([','.join(entry) for entry in rp])
+        rt_msg = '\n'.join(['\t'.join(entry) for entry in rp])
+        if not rt_msg:
+            rt_msg = 'No days to report of'
         return rt_msg
 
 
