@@ -168,6 +168,8 @@ class Synel():
         report = []
         if year is not None:
             year = datetime.datetime.strptime(year, '%Y')
+        else:
+            year = datetime.datetime.now().strftime('%Y')
         from_year = '{}-01-01T00:00:00'.format(year)
         to_year = '{}-01-01T00:00:00'.format(int(year) + 1)
         query = {'xFromDate': from_year, 'xToDate': to_year, 'Emp_No': username,
